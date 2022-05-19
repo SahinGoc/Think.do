@@ -1,15 +1,14 @@
-
 import 'dart:async';
 
-import 'package:bitirme_projesi/screens/login_page.dart';
+import 'package:bitirme_projesi/models/userData.dart';
+import 'package:bitirme_projesi/screens/verify_page.dart';
 import 'package:bitirme_projesi/services/auth.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-
 class SignUpForm extends StatefulWidget {
+  const SignUpForm({Key? key}) : super(key: key);
   @override
   State<StatefulWidget> createState() => _SignUpForm();
 }
@@ -17,7 +16,11 @@ class SignUpForm extends StatefulWidget {
 class _SignUpForm extends State<SignUpForm> {
   final auth = FirebaseAuth.instance;
   AuthService authService = AuthService();
+  late UserData userData = UserData.withOutInfo();
+
   late User? user;
+
+  final _formKey = GlobalKey<FormState>();
 
   static const maxSecond = 5;
   int seconds = maxSecond;
@@ -29,10 +32,6 @@ class _SignUpForm extends State<SignUpForm> {
   var textPassword = TextEditingController();
   var textRePassword = TextEditingController();
 
-  final _formKey = GlobalKey<FormState>();
-
-  String? _date;
-
   late bool click;
 
   @override
@@ -42,6 +41,14 @@ class _SignUpForm extends State<SignUpForm> {
 
     user = auth.currentUser;
     super.initState();
+  }
+
+  void dispose() {
+    textEmail.dispose();
+    textPassword.dispose();
+    textRePassword.dispose();
+
+    super.dispose();
   }
 
   @override
@@ -95,18 +102,7 @@ class _SignUpForm extends State<SignUpForm> {
                     height: 30.0,
                   ),
                   RePasswordTextFeild(),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: VerifyBtn(),
-                      flex: 2),
-                      Expanded(
-                        child: SignUpBtn(),
-                      flex: 4),
-
-
-                    ],
-                  )
+                  SignUpBtn(),
                 ],
               ),
             ),
@@ -139,16 +135,21 @@ class _SignUpForm extends State<SignUpForm> {
             borderRadius: BorderRadius.all(Radius.circular(5.0)),
           ),
           height: 50.0,
-          child: TextField(
+          child: TextFormField(
             keyboardType: TextInputType.emailAddress,
             controller: textEmail,
+            onSaved: (value) {
+              userData.email = value!;
+            },
             style: TextStyle(
               color: Color(0xFFEEEEEE),
             ),
             decoration: InputDecoration(
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.only(top: 5.0, left: 10.0),
-                hintText: "e-posta adresi giriniz"),
+                hintText: "e-posta adresi giriniz",
+                hintStyle: TextStyle(color: Colors.white)
+            ),
           ),
         ),
       ],
@@ -178,21 +179,26 @@ class _SignUpForm extends State<SignUpForm> {
             borderRadius: BorderRadius.all(Radius.circular(5.0)),
           ),
           height: 50.0,
-          child: TextFormField(
+          child: Form(
             key: _formKey,
-            /*validator: (value){
-              validation(value!);
-            },*/
-            obscureText: true,
-            keyboardType: TextInputType.visiblePassword,
-            controller: textPassword,
-            style: TextStyle(
-              color: Color(0xFFEEEEEE),
+            child: TextFormField(
+              validator: validation,
+              onSaved: (value) {
+                userData.password = value!;
+              },
+              obscureText: true,
+              keyboardType: TextInputType.visiblePassword,
+              controller: textPassword,
+              style: TextStyle(
+                color: Color(0xFFEEEEEE),
+              ),
+              decoration: InputDecoration(
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.only(top: 1.0, left: 10.0),
+                  hintText: "Şifre giriniz",
+                  hintStyle: TextStyle(color: Colors.white)
+              ),
             ),
-            decoration: InputDecoration(
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.only(top: 1.0, left: 10.0),
-                hintText: "Şifre giriniz"),
           ),
         ),
       ],
@@ -207,10 +213,10 @@ class _SignUpForm extends State<SignUpForm> {
           "Şifre Doğrulama",
           style: GoogleFonts.openSans(
               textStyle: TextStyle(
-                color: Color(0xFFEEEEEE),
-                fontSize: 15.0,
-                fontWeight: FontWeight.bold,
-              )),
+            color: Color(0xFFEEEEEE),
+            fontSize: 15.0,
+            fontWeight: FontWeight.bold,
+          )),
         ),
         SizedBox(
           height: 10.0,
@@ -223,6 +229,7 @@ class _SignUpForm extends State<SignUpForm> {
           ),
           height: 50.0,
           child: TextField(
+            obscureText: true,
             keyboardType: TextInputType.visiblePassword,
             controller: textRePassword,
             style: TextStyle(
@@ -231,65 +238,13 @@ class _SignUpForm extends State<SignUpForm> {
             decoration: InputDecoration(
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.only(top: 1.0, left: 10.0),
-                hintText: "Tekrar giriniz"),
+                hintText: "Tekrar giriniz",
+                hintStyle: TextStyle(color: Colors.white)
+            ),
           ),
         ),
       ],
     );
-  }
-
-  VerifyBtn() {
-    final running = timer == null ? false : timer!.isActive;
-    return Container(
-      padding: EdgeInsets.symmetric(vertical: 15.0),
-      alignment: Alignment.center,
-      child: TextButton(
-        onPressed: () {
-          if(click == false){
-            /*if (_formKey.currentState!.validate()) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Şifre uygun değil.')),
-              );
-            }*/
-            startTimer();
-            verify();
-          }else{
-
-          }
-        },
-        child: Text(text,
-            style: GoogleFonts.openSans(
-              textStyle: TextStyle(
-                color: Color(0xFFEEEEEE),
-                letterSpacing: 1.5,
-                fontWeight: FontWeight.bold,
-              ),
-            )),
-      ),
-    );
-  }
-
-  startTimer() {
-    click = true;
-    Timer.periodic(Duration(seconds: 1), (timer){
-      setState(() {
-        if(seconds > 0){
-          seconds--;
-          text = seconds.toString();
-          print(seconds);
-        }else{
-          stopTimer();
-        }
-      });
-    });
-  }
-
-  stopTimer() {
-    timer?.cancel();
-    click = false;
-    setState(() {
-      text = "Doğrula";
-    });
   }
 
   SignUpBtn() {
@@ -297,30 +252,55 @@ class _SignUpForm extends State<SignUpForm> {
       padding: EdgeInsets.symmetric(vertical: 15.0),
       child: ElevatedButton(
         onPressed: () {
-          authService.signUp(
-              email: textEmail.text,
-              password: textPassword.text).then(
-                  (value) {
-            if(value == null){
+          if (click == false) {
+            if (_formKey.currentState!.validate()) {
+              if (textPassword.text == textRePassword.text) {
+                _formKey.currentState!.save();
+                authService
+                    .signUp(
+                        email: textEmail.text,
+                        password: userData.password.trim())
+                    .then((value) {
+                  if (value == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                        content: Text(
+                      "Kayıt başarısız",
+                      style: TextStyle(fontSize: 16),
+                    )));
+                  } else {
+                    verify();
+                    userData.uid = value.uid;
+                    userData.email = value.email;
+                    authService.newUserCol(userData);
+                    Navigator.pushReplacement(context,
+                        MaterialPageRoute(builder: (context) => VerifyPage()));
+                  }
+                });
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    content: Text(
+                  "Girilen şifreler eşleşmiyor",
+                  style: TextStyle(fontSize: 16),
+                )));
+              }
+            } else {
               ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content:
-                  Text("Kayıt başarısız",
-                    style: TextStyle(fontSize: 16),)
-                  )
-              );
-            }else{
-              Navigator.pushReplacement(
-                  context, MaterialPageRoute(
-                  builder: (context) => LoginPage())
+                const SnackBar(content: Text('Şifre uygun değil.')),
               );
             }
-          });
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                content: Text(
+              "aaaa",
+              style: TextStyle(fontSize: 16),
+            )));
+          }
         },
         style: ElevatedButton.styleFrom(
           elevation: 5.0,
           padding: EdgeInsets.all(15.0),
           shape:
-          RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.0)),
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(30.0)),
           primary: Color(0xFFEEEEEE),
         ),
         child: Text("OLUŞTUR",
@@ -336,31 +316,33 @@ class _SignUpForm extends State<SignUpForm> {
   }
 
   void verify() {
+    user = auth.currentUser!;
     user!.sendEmailVerification();
     checkMailVerified();
   }
 
-  Future checkMailVerified() async{
+  Future checkMailVerified() async {
     user = auth.currentUser;
     await user!.reload();
-    if(user!.emailVerified){
+    if (user!.emailVerified) {
       print("Doğrulandı");
-    }else{
+    } else {
       print("doğrulanmadı");
     }
   }
-    // şifre kontrolü
-  /*String? validation(String value) {
-    RegExp regex = RegExp(r'^(?=.*?[A-Z])(?=.*?[a-z])(?=.*?[0-9])(?=.*?[!@#\$&*~]).{8,}$');
-    if (value.isEmpty || value == null) {
-      return 'Please enter password';
+
+  // şifre kontrolü
+  String? validation(String? value) {
+    print("validate");
+    RegExp regex = RegExp(r'^(?=.*?[A-Z])(?=.*?[a-z]).{8,}$');
+    if (value!.isEmpty) {
+      return 'Lütfen şifre girin';
     } else {
       if (!regex.hasMatch(value)) {
-        return 'Enter valid password';
+        return 'Hatalı şifre';
       } else {
-        return '';
+        return null;
       }
     }
-  }*/
-
+  }
 }

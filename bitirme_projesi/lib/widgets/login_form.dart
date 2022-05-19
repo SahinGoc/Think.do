@@ -1,8 +1,10 @@
 import 'package:bitirme_projesi/screens/home_page.dart';
 import 'package:bitirme_projesi/screens/sign_up_page.dart';
 import 'package:bitirme_projesi/services/auth.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 class LoginForm extends StatefulWidget {
   @override
@@ -10,13 +12,23 @@ class LoginForm extends StatefulWidget {
 }
 
 class _LoginFormState extends State<LoginForm> {
-  var textEmail = TextEditingController();
+  final _key = GlobalKey<FormState>();
 
+  late User user;
+
+  var textEmail = TextEditingController();
   var textPassword = TextEditingController();
 
   bool rememberMe = false;
   
-  AuthService authService = AuthService();
+  final AuthService authService = AuthService();
+
+  void dispose(){
+    textEmail.dispose();
+    textPassword.dispose();
+
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,11 +72,18 @@ class _LoginFormState extends State<LoginForm> {
                   SizedBox(
                     height: 30.0,
                   ),
-                  EmailTextFeild(context),
-                  SizedBox(
-                    height: 30.0,
+                  Form(
+                    key: _key,
+                    child: Column(
+                      children: [
+                        EmailTextFeild(context),
+                        SizedBox(
+                          height: 30.0,
+                        ),
+                        PasswordTextFeild(context),
+                      ],
+                    ),
                   ),
-                  PasswordTextFeild(context),
                   ForgotPasswordBtn(),
                   RememberMeCheckbox(),
                   LoginBtn(),
@@ -109,7 +128,7 @@ class _LoginFormState extends State<LoginForm> {
             borderRadius: BorderRadius.all(Radius.circular(5.0)),
           ),
           height: 50.0,
-          child: TextField(
+          child: TextFormField(
             keyboardType: TextInputType.emailAddress,
             controller: textEmail,
             style: TextStyle(
@@ -117,9 +136,10 @@ class _LoginFormState extends State<LoginForm> {
             ),
             decoration: InputDecoration(
                 border: InputBorder.none,
-                contentPadding: EdgeInsets.only(top: 10.0),
+                contentPadding: EdgeInsets.only(top: 15.0),
                 prefixIcon: Icon(Icons.email, color: Color(0xFFEEEEEE)),
-                hintText: "Email adresiniz"),
+                hintText: "Email adresiniz",
+            hintStyle: TextStyle(color: Color(0xFFEEEEEE))),
           ),
         ),
       ],
@@ -148,7 +168,7 @@ class _LoginFormState extends State<LoginForm> {
             borderRadius: BorderRadius.all(Radius.circular(5.0)),
           ),
           height: 50.0,
-          child: TextField(
+          child: TextFormField(
             controller: textPassword,
             obscureText: true,
             keyboardType: TextInputType.visiblePassword,
@@ -157,9 +177,10 @@ class _LoginFormState extends State<LoginForm> {
             ),
             decoration: InputDecoration(
                 border: InputBorder.none,
-                contentPadding: EdgeInsets.only(top: 10.0),
+                contentPadding: EdgeInsets.only(top: 15.0),
                 prefixIcon: Icon(Icons.lock, color: Color(0xFFEEEEEE)),
-                hintText: "Şifre"),
+                hintText: "Şifre",
+            hintStyle: TextStyle(color: Color(0xFFEEEEEE))),
           ),
         ),
       ],
@@ -214,13 +235,15 @@ class _LoginFormState extends State<LoginForm> {
       child: ElevatedButton(
         onPressed: () {
           authService.login(textEmail.text, textPassword.text).then((value) {
-            if(value == null){
+            var isMailVerified = authService.auth.currentUser!.emailVerified;
+            if(value == null || isMailVerified == false){
               ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:
-              Text("giriş yapılamadı", style: TextStyle(fontSize: 16)),
+              Text("Giriş yapılamadı", style: TextStyle(fontSize: 16)),
               ));
             }else{
+              user = value;
               Navigator.pushReplacement(context, MaterialPageRoute(
-                  builder: (context) => HomePage())
+                  builder: (context) => HomePage("Anasayfa"))
               );
             }
           });
@@ -256,7 +279,21 @@ class _LoginFormState extends State<LoginForm> {
 
   SocialBtn() {
     return InkWell(
-      onTap: () {},
+      onTap: () {
+        GoogleSignIn signInUser = GoogleSignIn();
+        //signInUser.signOut();
+        authService.signInWithGoogle().then((value) {
+          if(value.user == null){
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:
+            Text("giriş yapılamadı", style: TextStyle(fontSize: 16)),
+            ));
+          }else{
+            Navigator.pushReplacement(context, MaterialPageRoute(
+                builder: (context) => HomePage("Anasayfa"))
+            );
+          }
+        });
+      },
       child: Container(
         width: 50.0,
         height: 50.0,

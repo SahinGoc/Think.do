@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "1071720403335",
+    "firebase_url": "https://bitirme-projesi-v1-default-rtdb.firebaseio.com",
     "project_id": "bitirme-projesi-v1",
     "storage_bucket": "bitirme-projesi-v1.appspot.com"
   },
@@ -13,6 +14,14 @@
         }
       },
       "oauth_client": [
+        {
+          "client_id": "1071720403335-0fs8n3iei1h1vgusbn8lf276cfgi4d7k.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.bitirme_projesi",
+            "certificate_hash": "018dbf0dffbc2f781a7dd35580a662abfedf0969"
+          }
+        },
         {
           "client_id": "1071720403335-r4009bvm0bdbdmokukvs4lecu79gon4s.apps.googleusercontent.com",
           "client_type": 3
